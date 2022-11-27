@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.b
 /bazel-*
 xihe-sync-repo
 

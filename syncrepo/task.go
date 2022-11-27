@@ -8,13 +8,12 @@ import (
 	"strings"
 
 	"github.com/xanzy/go-gitlab"
+
+	"github.com/opensourceways/xihe-sync-repo/app"
+	"github.com/opensourceways/xihe-sync-repo/domain"
 )
 
-type syncRepoTask struct {
-	Owner    string
-	RepoId   string
-	RepoName string
-}
+type syncRepoTask = app.RepoInfo
 
 type syncRepoTaskGenerator struct {
 	userAgent string
@@ -40,7 +39,10 @@ func (d *syncRepoTaskGenerator) genTask(payload []byte, header map[string]string
 	}
 
 	v := strings.Split(e.Project.PathWithNamespace, "/")
-	cmd.Owner = v[0]
+
+	if cmd.Owner, err = domain.NewAccount(v[0]); err != nil {
+		return
+	}
 	cmd.RepoName = v[1]
 	cmd.RepoId = strconv.Itoa(e.ProjectID)
 
