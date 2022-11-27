@@ -22,9 +22,9 @@ type message struct {
 }
 
 type SyncRepo struct {
-	endpoint    string
 	hmac        string
 	topic       string
+	endpoint    string
 	hc          utils.HttpClient
 	generator   syncRepoTaskGenerator
 	syncservice app.SyncService
@@ -38,8 +38,11 @@ func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 	size := cfg.concurrentSize()
 
 	return &SyncRepo{
-		topic: cfg.Topic,
-		hc:    utils.NewHttpClient(3),
+		hmac:     cfg.AccessHmac,
+		topic:    cfg.Topic,
+		endpoint: cfg.AccessEndpoint,
+
+		hc: utils.NewHttpClient(3),
 		generator: syncRepoTaskGenerator{
 			userAgent: cfg.UserAgent,
 		},

@@ -64,7 +64,9 @@ func main() {
 
 	o := gatherOptions(flag.NewFlagSet(os.Args[0], flag.ExitOnError), os.Args[1:]...)
 	if err := o.Validate(); err != nil {
-		log.Fatalf("Invalid options, err:%s", err.Error())
+		log.Errorf("Invalid options, err:%s", err.Error())
+
+		return
 	}
 
 	if o.enableDebug {
@@ -75,11 +77,15 @@ func main() {
 	// init kafka
 	kafkaCfg, err := loadKafkaConfig(o.kafkamqConfigFile)
 	if err != nil {
-		log.Fatalf("Error loading kfk config, err:%v", err)
+		log.Errorf("Error loading kfk config, err:%v", err)
+
+		return
 	}
 
 	if err := connetKafka(&kafkaCfg); err != nil {
-		log.Fatalf("Error connecting kfk mq, err:%v", err)
+		log.Errorf("Error connecting kfk mq, err:%v", err)
+
+		return
 	}
 
 	defer kafka.Disconnect()
@@ -87,7 +93,9 @@ func main() {
 	// load config
 	cfg, err := loadConfig(o.service.ConfigFile)
 	if err != nil {
-		log.Fatalf("Error loading config, err:%v", err)
+		log.Errorf("Error loading config, err:%v", err)
+
+		return
 	}
 
 	// gitlab
@@ -127,7 +135,9 @@ func main() {
 
 	d := syncrepo.NewSyncRepo(&cfg.SyncRepo, service)
 	if err != nil {
-		log.Fatalf("Error new dispatcherj, err:%s", err.Error())
+		log.Errorf("Error new dispatcherj, err:%s", err.Error())
+
+		return
 	}
 
 	// run
