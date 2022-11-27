@@ -61,19 +61,19 @@ func (d *syncRepoTaskGenerator) parseRequest(payload []byte, header map[string]s
 	}
 
 	if header["User-Agent"] != d.userAgent {
-		err = errors.New("unknown User-Agent Header")
+		err = errors.New("unknown User-Agent")
 
 		return
 	}
 
 	if eventType = header["X-Gitlab-Event"]; eventType == "" {
-		err = errors.New("missing X-Gitlab-Event Header")
+		err = errors.New("missing X-Gitlab-Event")
 
 		return
 	}
 
 	if header["X-Gitlab-Event-UUID"] == "" {
-		err = errors.New("missing X-Gitlab-Event-UUID Header")
+		err = errors.New("missing X-Gitlab-Event-UUID")
 	}
 
 	return

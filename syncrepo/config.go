@@ -39,6 +39,10 @@ func (cfg *Config) Validate() error {
 		return errors.New("workspace must be a absolute path")
 	}
 
+	if cfg.AverageRepoSize <= 0 {
+		return errors.New("invalid average_repo_size")
+	}
+
 	if cfg.concurrentSize() <= 0 {
 		return errors.New("the concurrent size <= 0")
 	}
