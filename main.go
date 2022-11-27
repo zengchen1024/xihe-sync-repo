@@ -18,12 +18,12 @@ import (
 	liboptions "github.com/opensourceways/community-robot-lib/options"
 	"github.com/sirupsen/logrus"
 
-	"github.com/opensourceways/xihe-sync-repo/dispatcher"
+	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/synclockimpl"
-	app "github.com/opensourceways/xihe-sync-repo/sync"
+	"github.com/opensourceways/xihe-sync-repo/syncrepo"
 )
 
 type options struct {
@@ -117,7 +117,7 @@ func main() {
 
 	// sync service
 	service, err := app.NewSyncService(
-		&cfg.Sync, log, obsService, gitlab, lock,
+		&cfg.App, log, obsService, gitlab, lock,
 	)
 	if err != nil {
 		log.Errorf("init sync service failed, err:%s", err.Error())
@@ -125,7 +125,7 @@ func main() {
 		return
 	}
 
-	d := dispatcher.NewDispatcher(&cfg.Dispatcher, service)
+	d := syncrepo.NewSyncRepo(&cfg.SyncRepo, service)
 	if err != nil {
 		log.Fatalf("Error new dispatcherj, err:%s", err.Error())
 	}
@@ -195,7 +195,7 @@ func parseAddress(addresses string) []string {
 	return r
 }
 
-func run(d *dispatcher.Dispatcher, log *logrus.Entry) {
+func run(d *syncrepo.SyncRepo, log *logrus.Entry) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 

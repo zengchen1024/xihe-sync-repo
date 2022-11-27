@@ -3,11 +3,11 @@ package main
 import (
 	"github.com/opensourceways/community-robot-lib/utils"
 
-	"github.com/opensourceways/xihe-sync-repo/dispatcher"
+	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
-	"github.com/opensourceways/xihe-sync-repo/sync"
+	"github.com/opensourceways/xihe-sync-repo/syncrepo"
 )
 
 type configValidate interface {
@@ -19,20 +19,20 @@ type configSetDefault interface {
 }
 
 type configuration struct {
-	OBS        obsimpl.Config      `json:"obs"             required:"true"`
-	Sync       sync.Config         `json:"sync"            required:"true"`
-	Mysql      mysql.Config        `json:"mysql"           required:"true"`
-	Gitlab     platformimpl.Config `json:"gitlab"          required:"true"`
-	Dispatcher dispatcher.Config   `json:"dispatcher"      required:"true"`
+	App      app.Config          `json:"app"       required:"true"`
+	OBS      obsimpl.Config      `json:"obs"       required:"true"`
+	Mysql    mysql.Config        `json:"mysql"     required:"true"`
+	Gitlab   platformimpl.Config `json:"gitlab"    required:"true"`
+	SyncRepo syncrepo.Config     `json:"syncrepo"  required:"true"`
 }
 
 func (cfg *configuration) configItems() []interface{} {
 	return []interface{}{
-		&cfg.Sync,
+		&cfg.App,
 		&cfg.OBS,
 		&cfg.Gitlab,
 		&cfg.Mysql,
-		&cfg.Dispatcher,
+		&cfg.SyncRepo,
 	}
 }
 
