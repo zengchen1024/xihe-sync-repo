@@ -1,4 +1,4 @@
-package dispatcher
+package syncrepo
 
 import (
 	"encoding/json"

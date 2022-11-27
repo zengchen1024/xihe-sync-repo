@@ -1,4 +1,4 @@
-package dispatcher
+package syncrepo
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 	"github.com/opensourceways/community-robot-lib/mq"
 	"github.com/sirupsen/logrus"
 
+	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/domain"
-	app "github.com/opensourceways/xihe-sync-repo/sync"
 )
 
-type Dispatcher struct {
+type SyncRepo struct {
 	topic       string
 	generator   syncRepoTaskGenerator
 	syncservice app.SyncService
@@ -23,10 +23,10 @@ type Dispatcher struct {
 	messageChanSize int
 }
 
-func NewDispatcher(cfg *Config, service app.SyncService) *Dispatcher {
+func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 	size := cfg.concurrentSize()
 
-	return &Dispatcher{
+	return &SyncRepo{
 		topic: cfg.Topic,
 		generator: syncRepoTaskGenerator{
 			userAgent: cfg.UserAgent,
@@ -38,7 +38,7 @@ func NewDispatcher(cfg *Config, service app.SyncService) *Dispatcher {
 	}
 }
 
-func (d *Dispatcher) Run(ctx context.Context, log *logrus.Entry) error {
+func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
 	s, err := kafka.Subscribe(
 		d.topic,
 		d.handle,
@@ -70,7 +70,7 @@ func (d *Dispatcher) Run(ctx context.Context, log *logrus.Entry) error {
 	return nil
 }
 
-func (d *Dispatcher) handle(event mq.Event) error {
+func (d *SyncRepo) handle(event mq.Event) error {
 	msg := event.Message()
 
 	if err := d.validateMessage(msg); err != nil {
@@ -87,7 +87,7 @@ func (d *Dispatcher) handle(event mq.Event) error {
 	return nil
 }
 
-func (d *Dispatcher) validateMessage(msg *mq.Message) error {
+func (d *SyncRepo) validateMessage(msg *mq.Message) error {
 	if msg == nil {
 		return errors.New("get a nil msg from broker")
 	}
@@ -103,7 +103,7 @@ func (d *Dispatcher) validateMessage(msg *mq.Message) error {
 	return nil
 }
 
-func (d *Dispatcher) doTask(log *logrus.Entry) {
+func (d *SyncRepo) doTask(log *logrus.Entry) {
 	f := func(task syncRepoTask) error {
 		owner, err := domain.NewAccount(task.Owner)
 		if err != nil {

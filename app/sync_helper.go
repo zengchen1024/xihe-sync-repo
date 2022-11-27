@@ -1,4 +1,4 @@
-package sync
+package app
 
 import (
 	"path/filepath"
