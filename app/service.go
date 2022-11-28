@@ -36,11 +36,7 @@ func NewSyncService(
 	s obs.OBS,
 	p platform.Platform,
 	l synclock.RepoSyncLock,
-) (SyncService, error) {
-	if err := os.Mkdir(cfg.WorkDir, 0755); err != nil {
-		return nil, err
-	}
-
+) SyncService {
 	return &syncService{
 		h: &syncHelper{
 			obsService: s,
@@ -52,7 +48,7 @@ func NewSyncService(
 		ph:        p,
 		obsutil:   s.OBSUtilPath(),
 		obsBucket: s.OBSBucket(),
-	}, nil
+	}
 }
 
 type syncService struct {

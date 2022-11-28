@@ -124,14 +124,7 @@ func main() {
 	lock := synclockimpl.NewRepoSyncLock(mysql.NewSyncLockMapper())
 
 	// sync service
-	service, err := app.NewSyncService(
-		&cfg.App, log, obsService, gitlab, lock,
-	)
-	if err != nil {
-		log.Errorf("init sync service failed, err:%s", err.Error())
-
-		return
-	}
+	service := app.NewSyncService(&cfg.App, log, obsService, gitlab, lock)
 
 	d := syncrepo.NewSyncRepo(&cfg.SyncRepo, service)
 	if err != nil {
