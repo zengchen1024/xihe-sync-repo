@@ -2,7 +2,6 @@ package syncrepo
 
 import (
 	"errors"
-	"path/filepath"
 )
 
 type Config struct {
@@ -12,8 +11,6 @@ type Config struct {
 
 	Topic     string `json:"topic"                 required:"true"`
 	UserAgent string `json:"user_agent"            required:"true"`
-
-	Workspace string `json:"workspace"             required:"true"`
 
 	// The unit is Gbyte
 	SizeOfWorspace int `json:"size_of_workspace"   required:"true"`
@@ -33,10 +30,6 @@ func (cfg *Config) Validate() error {
 
 	if cfg.UserAgent == "" {
 		return errors.New("missing user_agent")
-	}
-
-	if !filepath.IsAbs(cfg.Workspace) {
-		return errors.New("workspace must be a absolute path")
 	}
 
 	if cfg.AverageRepoSize <= 0 {
