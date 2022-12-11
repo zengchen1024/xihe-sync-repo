@@ -82,9 +82,12 @@ func (s *syncService) SyncRepo(info *RepoInfo) error {
 
 	lastCommit, err := s.ph.GetLastCommit(info.RepoId)
 	if err != nil {
+		if platform.IsErrorRepoNotExists(err) {
+			return nil
+		}
+
 		return err
 	}
-
 	if c.LastCommit == lastCommit {
 		return nil
 	}

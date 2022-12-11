@@ -46,10 +46,17 @@ func (h *platformImpl) GetLastCommit(pid string) (string, error) {
 	opts.Page = 1
 	opts.PerPage = 1
 
-	v, _, err := h.cli.Commits.ListCommits(pid, &opts, nil)
+	v, resp, err := h.cli.Commits.ListCommits(pid, &opts, nil)
+	if err != nil {
+		if resp.StatusCode == 404 {
+			err = platform.NewErrorRepoNotExists(err)
+		}
 
-	if err != nil || len(v) == 0 {
 		return "", err
+	}
+
+	if len(v) == 0 {
+		return "", nil
 	}
 
 	return v[0].ID, nil
