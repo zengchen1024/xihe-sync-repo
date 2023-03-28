@@ -95,7 +95,7 @@ if [ -s $small_files ]; then
         while read line
         do
             if [ -z "$(inSmallFiles "$line")" ]; then
-                rm $line
+                rm "$line"
             fi
         done < $all_files
     else
@@ -104,12 +104,12 @@ if [ -s $small_files ]; then
 
         while read line
         do
-            dir=$sync_dir/$(dirname $line)
-            if [ ! -d $dir ]; then
-                mkdir -p $dir
+            dir=$sync_dir/$(dirname "$line")
+            if [ ! -d "$dir" ]; then
+                mkdir -p "$dir"
             fi
 
-            mv $line $sync_dir/$line
+            mv "$line" "$sync_dir/$line"
 
         done < $small_files
     fi
@@ -141,7 +141,7 @@ set +e
 if [ -s $deleted_files ]; then
     while read line
     do
-        $obsutil rm ${obspath}$line -f > /dev/null 2>&1
+        $obsutil rm "${obspath}$line" -f > /dev/null 2>&1
     done < $deleted_files
 fi
 
