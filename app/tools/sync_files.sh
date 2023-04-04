@@ -30,7 +30,7 @@ cd $work_dir
 # work_dir can't has suffix of / and must be an absolute path
 work_dir=$(pwd)
 
-git clone -q $repo_url
+git clone -q $repo_url > /dev/null 2>&1
 cd $repo_name
 
 last_commit=$(git log --format="%H" -n 1)
