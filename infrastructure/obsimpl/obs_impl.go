@@ -23,7 +23,7 @@ func NewOBS(cfg *Config) (dobs.OBS, error) {
 		"-i="+cfg.AccessKey, "-k="+cfg.SecretKey, "-e="+cfg.Endpoint,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("obsutil config failed, err:%s", err.Error())
+		return nil, fmt.Errorf("obsutil config failed")
 	}
 
 	return &obsImpl{
