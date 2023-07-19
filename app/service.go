@@ -198,17 +198,12 @@ func (s *syncService) syncFile(workDir, startCommit string, info *RepoInfo) (
 	v, err, _ := utils.RunCmd(params...)
 	if err != nil {
 		err = fmt.Errorf(
-			"run sync shell, err=%s, params=%v",
-			err.Error(), params,
+			"run sync shell, err=%s",
+			err.Error(),
 		)
 
 		return
 	}
-
-	s.log.Debugf(
-		"sync file for repo: %s, the result for sync shell is: %s",
-		info.repoOBSPath(), v,
-	)
 
 	r := strings.Split(string(v), ", ")
 	lastCommit = r[0]
