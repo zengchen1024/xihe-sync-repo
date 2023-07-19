@@ -36,7 +36,7 @@ func (o *options) Validate() error {
 	return o.service.Validate()
 }
 
-func gatherOptions(fs *flag.FlagSet, args ...string) options {
+func gatherOptions(fs *flag.FlagSet, args ...string) (options, error) {
 	var o options
 
 	o.service.AddFlags(fs)
@@ -51,9 +51,9 @@ func gatherOptions(fs *flag.FlagSet, args ...string) options {
 		"whether to enable debug model.",
 	)
 
-	_ = fs.Parse(args)
+	err := fs.Parse(args)
 
-	return o
+	return o, err
 }
 
 const component = "xihe-sync-repo"
@@ -62,7 +62,12 @@ func main() {
 	logrusutil.ComponentInit(component)
 	log := logrus.NewEntry(logrus.StandardLogger())
 
-	o := gatherOptions(flag.NewFlagSet(os.Args[0], flag.ExitOnError), os.Args[1:]...)
+	o, err := gatherOptions(flag.NewFlagSet(os.Args[0], flag.ExitOnError), os.Args[1:]...)
+
+	if err != nil {
+		logrus.Fatalf("new options failed, err:%s", err.Error())
+	}
+
 	if err := o.Validate(); err != nil {
 		log.Errorf("Invalid options, err:%s", err.Error())
 
