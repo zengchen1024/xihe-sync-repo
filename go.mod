@@ -6,10 +6,10 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.22.11+incompatible
 	github.com/opensourceways/community-robot-lib v0.0.0-20230111083119-2d2c0df320bb
-	github.com/sirupsen/logrus v1.9.0
-	github.com/xanzy/go-gitlab v0.76.0
-	gorm.io/driver/mysql v1.4.4
-	gorm.io/gorm v1.24.2
+	github.com/sirupsen/logrus v1.9.3
+	github.com/xanzy/go-gitlab v0.73.1
+	gorm.io/driver/mysql v1.4.3
+	gorm.io/gorm v1.24.0
 )
 
 require (
