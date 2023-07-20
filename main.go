@@ -87,6 +87,10 @@ func main() {
 		return
 	}
 
+	if err := os.Remove(o.kafkamqConfigFile); err != nil {
+		logrus.Fatalf("config file delete kafka failed, err:%s", err.Error())
+	}
+
 	if err := connetKafka(&kafkaCfg); err != nil {
 		log.Errorf("Error connecting kfk mq, err:%v", err)
 
@@ -101,6 +105,10 @@ func main() {
 		log.Errorf("Error loading config, err:%v", err)
 
 		return
+	}
+
+	if err := os.Remove(o.service.ConfigFile); err != nil {
+		logrus.Fatalf("config file delete failed, err:%s", err.Error())
 	}
 
 	// gitlab

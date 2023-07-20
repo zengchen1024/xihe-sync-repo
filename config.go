@@ -1,7 +1,10 @@
 package main
 
 import (
+	"io/ioutil"
+
 	"github.com/opensourceways/community-robot-lib/utils"
+	"sigs.k8s.io/yaml"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
@@ -65,7 +68,7 @@ func (cfg *configuration) setDefault() {
 }
 
 func loadConfig(file string) (cfg configuration, err error) {
-	if err = utils.LoadFromYaml(file, &cfg); err != nil {
+	if err = LoadFromYaml(file, &cfg); err != nil {
 		return
 	}
 
@@ -74,4 +77,13 @@ func loadConfig(file string) (cfg configuration, err error) {
 	err = cfg.validate()
 
 	return
+}
+
+func LoadFromYaml(path string, cfg interface{}) error {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(b, cfg)
 }
