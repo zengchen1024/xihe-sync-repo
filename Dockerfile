@@ -14,6 +14,11 @@ RUN apk update && apk add --no-cache \
         git \
         bash \
         libc6-compat
+
+RUN adduser mindspore -u 5000 -D
+USER mindspore
+WORKDIR /opt/app/
+
 COPY --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/xihe-sync-repo /opt/app/xihe-sync-repo
 COPY --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/obsutil /opt/app/obsutil
 COPY --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/app/tools/sync_files.sh /opt/app/sync_file.sh
