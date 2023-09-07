@@ -25,4 +25,6 @@ COPY --chown=mindspore:mindspore --from=BUILDER /go/src/github.com/opensourceway
 
 USER mindspore
 
+RUN mkdir /opt/app/workspace
+
 ENTRYPOINT ["/opt/app/xihe-sync-repo"]
