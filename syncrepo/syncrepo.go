@@ -8,16 +8,21 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/opensourceways/community-robot-lib/kafka"
-	"github.com/opensourceways/community-robot-lib/mq"
 	"github.com/opensourceways/community-robot-lib/utils"
+	kfklib "github.com/opensourceways/kafka-lib/agent"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
+	"github.com/opensourceways/xihe-sync-repo/infrastructure/messages"
+)
+
+const (
+	retryNum           = 3
+	handlerNameGenTask = "create_task"
 )
 
 type message struct {
-	msg  *mq.Message
+	msg  messages.Message
 	task syncRepoTask
 }
 
@@ -54,14 +59,9 @@ func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 }
 
 func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
-	s, err := kafka.Subscribe(
-		d.topic,
-		d.handle,
-		func(opt *mq.SubscribeOptions) {
-			opt.Queue = "xihe-sync-repo"
-		},
-	)
-	if err != nil {
+	if err := kfklib.SubscribeWithStrategyOfRetry(
+		handlerNameGenTask, d.handle, []string{d.topic}, retryNum,
+	); err != nil {
 		return err
 	}
 
@@ -76,8 +76,6 @@ func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
 
 	<-ctx.Done()
 
-	s.Unsubscribe()
-
 	close(d.messageChan)
 
 	d.wg.Wait()
@@ -85,16 +83,19 @@ func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
 	return nil
 }
 
-func (d *SyncRepo) handle(event mq.Event) error {
-	msg := event.Message()
-
-	if err := d.validateMessage(msg); err != nil {
+func (d *SyncRepo) handle(body []byte, header map[string]string) error {
+	if err := d.validateMessage(body, header); err != nil {
 		return err
 	}
 
-	task, ok, err := d.generator.genTask(msg.Body, msg.Header)
+	task, ok, err := d.generator.genTask(body, header)
 	if err != nil || !ok {
 		return err
+	}
+
+	msg := messages.Message{
+		Body:   body,
+		Header: header,
 	}
 
 	d.messageChan <- message{
@@ -105,16 +106,12 @@ func (d *SyncRepo) handle(event mq.Event) error {
 	return nil
 }
 
-func (d *SyncRepo) validateMessage(msg *mq.Message) error {
-	if msg == nil {
-		return errors.New("get a nil msg from broker")
-	}
-
-	if len(msg.Header) == 0 {
+func (d *SyncRepo) validateMessage(body []byte, header map[string]string) error {
+	if len(body) == 0 {
 		return errors.New("unexpect message: empty header")
 	}
 
-	if len(msg.Body) == 0 {
+	if len(header) == 0 {
 		return errors.New("unexpect message: empty payload")
 	}
 
@@ -131,9 +128,10 @@ func (d *SyncRepo) doTask(log *logrus.Entry) {
 		s := fmt.Sprintf(
 			"%s/%s/%s", task.Owner.Account(), task.RepoName, task.RepoId,
 		)
+
 		log.Errorf("sync repo(%s) failed, err:%s", s, err.Error())
 
-		if err = d.sendBack(msg.msg); err != nil {
+		if err = d.sendBack(msg.msg.Body); err != nil {
 			log.Errorf(
 				"send back the message for repo(%s) failed, err:%s",
 				s, err.Error(),
@@ -155,9 +153,9 @@ func (d *SyncRepo) doTask(log *logrus.Entry) {
 	}
 }
 
-func (d *SyncRepo) sendBack(e *mq.Message) error {
+func (d *SyncRepo) sendBack(body []byte) error {
 	req, err := http.NewRequest(
-		http.MethodPost, d.endpoint, bytes.NewBuffer(e.Body),
+		http.MethodPost, d.endpoint, bytes.NewBuffer(body),
 	)
 	if err != nil {
 		return err

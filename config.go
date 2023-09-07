@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/opensourceways/community-robot-lib/utils"
+	redislib "github.com/opensourceways/redis-lib"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
+	"github.com/opensourceways/xihe-sync-repo/infrastructure/redis"
 	"github.com/opensourceways/xihe-sync-repo/syncrepo"
 )
 
@@ -24,6 +26,16 @@ type configuration struct {
 	Mysql    mysql.Config        `json:"mysql"     required:"true"`
 	Gitlab   platformimpl.Config `json:"gitlab"    required:"true"`
 	SyncRepo syncrepo.Config     `json:"syncrepo"  required:"true"`
+	Redis    redis.Redis         `json:"redis"     required:"true"`
+}
+
+func (cfg *configuration) getRedisConfig() redislib.Config {
+	return redislib.Config{
+		Address:  cfg.Redis.DB.Address,
+		Password: cfg.Redis.DB.Password,
+		DB:       cfg.Redis.DB.DB,
+		Timeout:  cfg.Redis.DB.Timeout,
+	}
 }
 
 func (cfg *configuration) configItems() []interface{} {
@@ -33,6 +45,7 @@ func (cfg *configuration) configItems() []interface{} {
 		&cfg.Gitlab,
 		&cfg.Mysql,
 		&cfg.SyncRepo,
+		&cfg.Redis.DB,
 	}
 }
 
