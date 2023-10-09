@@ -2,23 +2,19 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
-	"io/ioutil"
 	"os"
 	"os/signal"
-	"regexp"
-	"strings"
 	"sync"
 	"syscall"
 
-	"github.com/opensourceways/community-robot-lib/kafka"
 	"github.com/opensourceways/community-robot-lib/logrusutil"
-	"github.com/opensourceways/community-robot-lib/mq"
 	liboptions "github.com/opensourceways/community-robot-lib/options"
+	redislib "github.com/opensourceways/redis-lib"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
+	"github.com/opensourceways/xihe-sync-repo/infrastructure/messages"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
@@ -79,26 +75,6 @@ func main() {
 		logrus.Debug("debug enabled.")
 	}
 
-	// init kafka
-	kafkaCfg, err := loadKafkaConfig(o.kafkamqConfigFile)
-	if err != nil {
-		log.Errorf("Error loading kfk config, err:%v", err)
-
-		return
-	}
-
-	if err := os.Remove(o.kafkamqConfigFile); err != nil {
-		logrus.Fatalf("config file delete kafka failed, err:%s", err.Error())
-	}
-
-	if err := connetKafka(&kafkaCfg); err != nil {
-		log.Errorf("Error connecting kfk mq, err:%v", err)
-
-		return
-	}
-
-	defer kafka.Disconnect()
-
 	// load config
 	cfg, err := loadConfig(o.service.ConfigFile)
 	if err != nil {
@@ -108,8 +84,38 @@ func main() {
 	}
 
 	if err := os.Remove(o.service.ConfigFile); err != nil {
-		logrus.Fatalf("config file delete failed, err:%s", err.Error())
+		log.Fatalf("Error remove config file, err:%v", err)
 	}
+
+	// init redis for kafka
+	redisCfg := cfg.getRedisConfig()
+	if err = redislib.Init(&redisCfg); err != nil {
+		log.Errorf("Error init redis of kafka error, err:%v", err)
+
+		return
+	}
+
+	defer redislib.Close()
+
+	// init kafka
+	kafkaCfg, err := messages.LoadKafkaConfig(o.kafkamqConfigFile)
+	if err != nil {
+		log.Errorf("Error loading kfk config, err:%v", err)
+
+		return
+	}
+
+	if err := os.Remove(o.kafkamqConfigFile); err != nil {
+		log.Fatalf("Error remove kafka config file, err:%v", err)
+	}
+
+	if err := messages.InitKfkLib(kafkaCfg, log); err != nil {
+		log.Errorf("Error connecting kfk mq, err:%v", err)
+
+		return
+	}
+
+	defer messages.KfkLibExit()
 
 	// gitlab
 	gitlab, err := platformimpl.NewPlatform(&cfg.Gitlab)
@@ -148,67 +154,6 @@ func main() {
 
 	// run
 	run(d, log)
-}
-
-func connetKafka(cfg *mq.MQConfig) error {
-	tlsConfig, err := cfg.TLSConfig.TLSConfig()
-	if err != nil {
-		return err
-	}
-
-	err = kafka.Init(
-		mq.Addresses(cfg.Addresses...),
-		mq.SetTLSConfig(tlsConfig),
-		mq.Log(logrus.WithField("module", "kfk")),
-	)
-	if err != nil {
-		return err
-	}
-
-	return kafka.Connect()
-}
-
-func loadKafkaConfig(file string) (cfg mq.MQConfig, err error) {
-	v, err := ioutil.ReadFile(file)
-	if err != nil {
-		return
-	}
-
-	str := string(v)
-	if str == "" {
-		err = errors.New("missing addresses")
-
-		return
-	}
-
-	addresses := parseAddress(str)
-	if len(addresses) == 0 {
-		err = errors.New("no valid address for kafka")
-
-		return
-	}
-
-	if err = kafka.ValidateConnectingAddress(addresses); err != nil {
-		return
-	}
-
-	cfg.Addresses = addresses
-
-	return
-}
-
-func parseAddress(addresses string) []string {
-	var reIpPort = regexp.MustCompile(`^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}:[1-9][0-9]*$`)
-
-	v := strings.Split(addresses, ",")
-	r := make([]string, 0, len(v))
-	for i := range v {
-		if reIpPort.MatchString(v[i]) {
-			r = append(r, v[i])
-		}
-	}
-
-	return r
 }
 
 func run(d *syncrepo.SyncRepo, log *logrus.Entry) {

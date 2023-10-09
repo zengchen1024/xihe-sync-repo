@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -149,7 +148,7 @@ func (s *syncService) doSync(startCommit string, info *RepoInfo) (lastCommit str
 }
 
 func (s *syncService) sync(startCommit string, info *RepoInfo) (last string, err error) {
-	tempDir, err := ioutil.TempDir(s.cfg.WorkDir, "sync")
+	tempDir, err := os.MkdirTemp(s.cfg.WorkDir, "sync")
 	if err != nil {
 		return
 	}
@@ -197,9 +196,10 @@ func (s *syncService) syncFile(workDir, startCommit string, info *RepoInfo) (
 
 	v, err, _ := utils.RunCmd(params...)
 	if err != nil {
+		params[2] = "clone_url"
 		err = fmt.Errorf(
-			"run sync shell, err=%s",
-			err.Error(),
+			"run sync shell, err=%s, params=%v,",
+			err.Error(), params,
 		)
 
 		return
