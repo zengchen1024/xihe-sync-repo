@@ -83,6 +83,10 @@ func main() {
 		return
 	}
 
+	if err := os.Remove(o.service.ConfigFile); err != nil {
+		log.Fatalf("Error remove config file, err:%v", err)
+	}
+
 	// init redis for kafka
 	redisCfg := cfg.getRedisConfig()
 	if err = redislib.Init(&redisCfg); err != nil {
@@ -99,6 +103,10 @@ func main() {
 		log.Errorf("Error loading kfk config, err:%v", err)
 
 		return
+	}
+
+	if err := os.Remove(o.kafkamqConfigFile); err != nil {
+		log.Fatalf("Error remove kafka config file, err:%v", err)
 	}
 
 	if err := messages.InitKfkLib(kafkaCfg, log); err != nil {
