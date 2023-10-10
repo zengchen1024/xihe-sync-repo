@@ -12,6 +12,7 @@ require (
 	github.com/xanzy/go-gitlab v0.73.1
 	gorm.io/driver/mysql v1.4.3
 	gorm.io/gorm v1.24.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -52,5 +53,4 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apimachinery v0.26.1 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )
