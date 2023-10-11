@@ -1,8 +1,6 @@
 #!/bin/bash
 
 set -eu
-# don't set any options, otherwise it will fail arbitrarily
-# set -euo pipefail
 
 echo_message() {
     echo "$1, $2, $3"
