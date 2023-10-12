@@ -1,4 +1,7 @@
-FROM golang:latest as BUILDER
+FROM openeuler/openeuler:23.03 as BUILDER
+RUN dnf update -y && \
+    dnf install -y golang && \
+    go env -w GOPROXY=https://goproxy.cn,direct
 
 MAINTAINER zengchen1024<chenzeng765@gmail.com>
 
@@ -9,20 +12,19 @@ RUN GO111MODULE=on CGO_ENABLED=0 go build -o xihe-sync-repo
 RUN tar -xf ./app/tools/obsutil.tar.gz
 
 # copy binary config and utils
-FROM alpine:3.14
-RUN apk update && apk add --no-cache \
-        git \
-        bash \
-        libc6-compat
+FROM openeuler/openeuler:22.03
+RUN dnf -y update && \
+    dnf in -y shadow git bash && \
+    groupadd -g 5000 mindspore && \
+    useradd -u 5000 -g mindspore -s /bin/bash -m mindspore
 
-RUN adduser mindspore -u 5000 -D
+USER mindspore
 WORKDIR /opt/app
-RUN chown -R mindspore:mindspore /opt/app
 
 COPY --chown=mindspore:mindspore --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/xihe-sync-repo /opt/app
 COPY --chown=mindspore:mindspore --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/obsutil /opt/app
 COPY --chown=mindspore:mindspore --from=BUILDER /go/src/github.com/opensourceways/xihe-sync-repo/app/tools/sync_files.sh /opt/app
 
-USER mindspore
+RUN mkdir /opt/app/workspace
 
 ENTRYPOINT ["/opt/app/xihe-sync-repo"]
