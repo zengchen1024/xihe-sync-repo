@@ -8,7 +8,7 @@ MAINTAINER zengchen1024<chenzeng765@gmail.com>
 # build binary
 COPY . /go/src/github.com/opensourceways/xihe-sync-repo
 WORKDIR /go/src/github.com/opensourceways/xihe-sync-repo
-RUN GO111MODULE=on CGO_ENABLED=0 go build -o xihe-sync-repo
+RUN GO111MODULE=on CGO_ENABLED=0 go build -o xihe-sync-repo -buildmode=pie --ldflags "-s -linkmode 'external' -extldflags '-Wl,-z,now'"
 RUN tar -xf ./app/tools/obsutil.tar.gz
 
 # copy binary config and utils
