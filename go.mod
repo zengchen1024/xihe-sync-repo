@@ -10,8 +10,8 @@ require (
 	github.com/opensourceways/redis-lib v0.0.0-20230830095926-13d246a18179
 	github.com/sirupsen/logrus v1.9.3
 	github.com/xanzy/go-gitlab v0.73.1
-	gorm.io/driver/mysql v1.4.3
-	gorm.io/gorm v1.24.0
+	gorm.io/driver/mysql v1.3.4
+	gorm.io/gorm v1.23.6
 	sigs.k8s.io/yaml v1.3.0
 )
 
