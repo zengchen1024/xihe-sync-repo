@@ -89,7 +89,7 @@ func main() {
 
 	// init redis for kafka
 	redisCfg := cfg.getRedisConfig()
-	if err = redislib.Init(&redisCfg); err != nil {
+	if err = redislib.Init(&redisCfg, true); err != nil {
 		log.Errorf("Error init redis of kafka error, err:%v", err)
 
 		return
