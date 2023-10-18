@@ -3,15 +3,15 @@ module github.com/opensourceways/xihe-sync-repo
 go 1.18
 
 require (
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.22.11+incompatible
 	github.com/opensourceways/community-robot-lib v0.0.0-20231018034126-a664e14dbb9d
 	github.com/opensourceways/kafka-lib v0.0.0-20230905120934-4961d2b76841
 	github.com/opensourceways/redis-lib v0.0.0-20231018083224-85bc8e32c7c0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/xanzy/go-gitlab v0.73.1
-	gorm.io/driver/mysql v1.3.4
-	gorm.io/gorm v1.23.6
+	gorm.io/driver/mysql v1.5.2
+	gorm.io/gorm v1.25.2-0.20230530020048-26663ab9bf55
 	sigs.k8s.io/yaml v1.3.0
 )
 

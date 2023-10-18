@@ -1,12 +1,12 @@
 package mysql
 
 type Config struct {
-	Conn            string `json:"conn" required:"true"`
+	Conn            string `json:"conn"         required:"true"`
 	ConnMaxLifetime int    `json:"conn_max_life_time"`
 	MaxOpenConns    int    `json:"max_open_conns"`
 	MaxIdleConns    int    `json:"max_idle_conns"`
-
-	TableName string `json:"table_name"   required:"true"`
+	DBCert          string `json:"db_cert"      required:"true"`
+	TableName       string `json:"table_name"   required:"true"`
 }
 
 func (cfg *Config) SetDefault() {
