@@ -3,7 +3,7 @@ module github.com/opensourceways/xihe-sync-repo
 go 1.18
 
 require (
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.22.11+incompatible
 	github.com/opensourceways/community-robot-lib v0.0.0-20231018034126-a664e14dbb9d
 	github.com/opensourceways/kafka-lib v0.0.0-20231016135231-bf184b2d51e7
