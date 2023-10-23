@@ -62,9 +62,10 @@ func (impl syncLock) toRepoSyncLockDO(p *domain.RepoSyncLock) RepoSyncLockDO {
 		Id:         p.Id,
 		Owner:      p.Owner.Account(),
 		RepoId:     p.RepoId,
-		LastCommit: p.LastCommit,
 		Status:     p.Status.RepoSyncStatus(),
+		Expiry:     p.Expiry,
 		Version:    p.Version,
+		LastCommit: p.LastCommit,
 	}
 }
 
@@ -73,17 +74,12 @@ type RepoSyncLockDO struct {
 	Owner      string
 	RepoId     string
 	Status     string
-	RepoType   string
-	LastCommit string
+	Expiry     int64
 	Version    int
+	LastCommit string
 }
 
 func (do *RepoSyncLockDO) toSyncLock(r *domain.RepoSyncLock) (err error) {
-	r.Id = do.Id
-	r.RepoId = do.RepoId
-	r.Version = do.Version
-	r.LastCommit = do.LastCommit
-
 	if r.Owner, err = domain.NewAccount(do.Owner); err != nil {
 		return
 	}
@@ -91,6 +87,12 @@ func (do *RepoSyncLockDO) toSyncLock(r *domain.RepoSyncLock) (err error) {
 	if r.Status, err = domain.NewRepoSyncStatus(do.Status); err != nil {
 		return
 	}
+
+	r.Id = do.Id
+	r.RepoId = do.RepoId
+	r.Expiry = do.Expiry
+	r.Version = do.Version
+	r.LastCommit = do.LastCommit
 
 	return
 }

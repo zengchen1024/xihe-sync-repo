@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 const (
 	repoSyncStatusDone    = "done"
@@ -40,11 +43,51 @@ func (s repoSyncStatus) IsDone() bool {
 	return string(s) == repoSyncStatusDone
 }
 
+func NewRepoSyncLock(owner Account, repoId string) RepoSyncLock {
+	return RepoSyncLock{
+		Owner:  owner,
+		RepoId: repoId,
+	}
+}
+
 type RepoSyncLock struct {
 	Id         string
 	Owner      Account
 	RepoId     string
 	Status     RepoSyncStatus
+	Expiry     int64
 	Version    int
 	LastCommit string
+}
+
+func (l *RepoSyncLock) Lock(commit string) bool {
+	if l.LastCommit == commit {
+		return false
+	}
+
+	l.Status = RepoSyncStatusRunning
+	l.Expiry = time.Now().Unix() + 10*3600
+
+	return true
+}
+
+func (l *RepoSyncLock) UnLock(commit string) {
+	if commit != "" {
+		l.LastCommit = commit
+	}
+
+	l.Status = RepoSyncStatusDone
+	l.Expiry = 0
+}
+
+func (l *RepoSyncLock) IsDoing() bool {
+	return !l.isDone() && !l.isExpiried()
+}
+
+func (l *RepoSyncLock) isDone() bool {
+	return l.Status == nil || l.Status.IsDone()
+}
+
+func (l *RepoSyncLock) isExpiried() bool {
+	return l.Expiry < time.Now().Unix()
 }

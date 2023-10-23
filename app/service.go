@@ -69,13 +69,10 @@ func (s *syncService) SyncRepo(info *RepoInfo) error {
 			return err
 		}
 
-		c.Owner = info.Owner
-		c.RepoId = info.RepoId
+		c = domain.NewRepoSyncLock(info.Owner, info.RepoId)
 	}
 
-	if c.Status != nil && !c.Status.IsDone() {
-		// TODO: mybe dead lock, try to unlock it and continue
-
+	if c.IsDoing() {
 		return errors.New("can't sync")
 	}
 
@@ -87,44 +84,50 @@ func (s *syncService) SyncRepo(info *RepoInfo) error {
 
 		return err
 	}
-	if c.LastCommit == lastCommit {
-		return nil
-	}
 
 	// try lock
-	c.Status = domain.RepoSyncStatusRunning
-	c, err = s.lock.Save(&c)
-	if err != nil {
+	if b, err := s.tryLock(&c, lastCommit); b || err != nil {
 		return err
 	}
 
 	// do sync
 	lastCommit, syncErr := s.doSync(c.LastCommit, info)
-	if syncErr == nil {
-		c.LastCommit = lastCommit
-	}
-	c.Status = domain.RepoSyncStatusDone
 
 	// unlock
-	err = utils.Retry(func() error {
-		_, err := s.lock.Save(&c)
-		if err != nil {
-			s.log.Errorf(
-				"save sync repo(%s) failed, err:%s, value=%v",
-				info.repoOBSPath(), err.Error(), c,
-			)
-		}
-
-		return err
-	})
-	if err != nil {
-		s.log.Errorf(
-			"save sync repo(%s) failed, dead lock happened",
-			info.repoOBSPath(),
-		)
-	}
+	s.tryUnlock(&c, lastCommit)
 
 	return syncErr
+}
+
+func (s *syncService) tryLock(c *domain.RepoSyncLock, commit string) (bool, error) {
+	if !c.Lock(commit) {
+		// the repo is up to date now.
+		return true, nil
+	}
+
+	c1, err := s.lock.Save(c)
+	if err == nil {
+		*c = c1
+	}
+
+	return false, err
+}
+
+func (s *syncService) tryUnlock(c *domain.RepoSyncLock, commit string) {
+	c.UnLock(commit)
+
+	err := utils.Retry(func() error {
+		_, err1 := s.lock.Save(c)
+		if err1 != nil {
+			s.log.Errorf("save lock(%v) failed, err:%s", *c, err1.Error())
+		}
+
+		return err1
+	})
+
+	if err != nil {
+		s.log.Errorf("save lock(%s) failed, dead lock happened", *c)
+	}
 }
 
 func (s *syncService) doSync(startCommit string, info *RepoInfo) (lastCommit string, err error) {
