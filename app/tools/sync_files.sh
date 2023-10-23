@@ -35,6 +35,13 @@ last_commit=$(git log --format="%H" -n 1)
 file_prefix=$work_dir/$last_commit
 
 all_files=${file_prefix}_files
+
+if [ -n "$start_commit" ]; then
+    set +e
+    git cat-file -t "$start_commit" || start_commit=""
+    set -e
+fi
+
 if [ -z "$start_commit" ]; then
     rm .git -fr
 
