@@ -24,7 +24,7 @@ type HelperConfig struct {
 }
 
 func (c *Config) SetDefault() {
-	if c.Expiry == 0 {
+	if c.Expiry <= 0 {
 		c.Expiry = 10 * 3600 // seconds
 	}
 }
