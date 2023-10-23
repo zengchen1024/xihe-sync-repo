@@ -13,6 +13,7 @@ type Config struct {
 
 type ServiceConfig struct {
 	WorkDir       string `json:"work_dir"        required:"true"`
+	Expiry        int64  `json:"expiry"`
 	SyncFileShell string `json:"sync_file_shell" required:"true"`
 }
 
@@ -20,6 +21,12 @@ type HelperConfig struct {
 	LFSPath    string `json:"lfs_path"    required:"true"`
 	RepoPath   string `json:"repo_path"   required:"true"`
 	CommitFile string `json:"commit_file" required:"true"`
+}
+
+func (c *Config) SetDefault() {
+	if c.Expiry == 0 {
+		c.Expiry = 10 * 3600 // seconds
+	}
 }
 
 func (c *Config) Validate() error {

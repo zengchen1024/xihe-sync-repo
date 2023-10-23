@@ -86,7 +86,7 @@ func (s *syncService) SyncRepo(info *RepoInfo) error {
 	}
 
 	// try lock
-	if b, err := s.tryLock(&c, lastCommit); b || err != nil {
+	if b, err := s.tryLock(&c, lastCommit); !b || err != nil {
 		return err
 	}
 
@@ -100,9 +100,9 @@ func (s *syncService) SyncRepo(info *RepoInfo) error {
 }
 
 func (s *syncService) tryLock(c *domain.RepoSyncLock, commit string) (bool, error) {
-	if !c.Lock(commit) {
+	if !c.Lock(commit, s.cfg.Expiry) {
 		// the repo is up to date now.
-		return true, nil
+		return false, nil
 	}
 
 	c1, err := s.lock.Save(c)
@@ -110,7 +110,7 @@ func (s *syncService) tryLock(c *domain.RepoSyncLock, commit string) (bool, erro
 		*c = c1
 	}
 
-	return false, err
+	return true, err
 }
 
 func (s *syncService) tryUnlock(c *domain.RepoSyncLock, commit string) {

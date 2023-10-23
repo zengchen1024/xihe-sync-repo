@@ -60,13 +60,14 @@ type RepoSyncLock struct {
 	LastCommit string
 }
 
-func (l *RepoSyncLock) Lock(commit string) bool {
+func (l *RepoSyncLock) Lock(commit string, expiry int64) bool {
 	if l.LastCommit == commit {
+		// the repo is up to date
 		return false
 	}
 
 	l.Status = RepoSyncStatusRunning
-	l.Expiry = time.Now().Unix() + 10*3600
+	l.Expiry = time.Now().Unix() + expiry
 
 	return true
 }
