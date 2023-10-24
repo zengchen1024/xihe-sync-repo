@@ -20,7 +20,7 @@ type syncRepoTaskGenerator struct {
 }
 
 func (d *syncRepoTaskGenerator) genTask(payload []byte, header map[string]string) (
-	cmd syncRepoTask, ok bool, err error,
+	cmd syncRepoTask, retry bool, err error,
 ) {
 	eventType, err := d.parseRequest(payload, header)
 	if err != nil {
@@ -30,11 +30,15 @@ func (d *syncRepoTaskGenerator) genTask(payload []byte, header map[string]string
 	}
 
 	if gitlab.EventType(eventType) != gitlab.EventTypePush {
+		err = errors.New("not push event")
+
 		return
 	}
 
 	e := new(gitlab.PushEvent)
 	if err = json.Unmarshal(payload, e); err != nil {
+		retry = true
+
 		return
 	}
 
@@ -45,8 +49,6 @@ func (d *syncRepoTaskGenerator) genTask(payload []byte, header map[string]string
 	}
 	cmd.RepoName = v[1]
 	cmd.RepoId = strconv.Itoa(e.ProjectID)
-
-	ok = true
 
 	return
 }

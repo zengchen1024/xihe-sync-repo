@@ -2,13 +2,11 @@ package syncrepo
 
 import (
 	"errors"
+
+	kfklib "github.com/opensourceways/kafka-lib/agent"
 )
 
 type Config struct {
-	// AccessEndpoint is used to send back the message.
-	AccessEndpoint string `json:"access_endpoint"  required:"true"`
-	AccessHmac     string `json:"access_hmac"      required:"true"`
-
 	Topic     string `json:"topic"                 required:"true"`
 	UserAgent string `json:"user_agent"            required:"true"`
 
@@ -17,6 +15,9 @@ type Config struct {
 
 	// The unit is Gbyte
 	AverageRepoSize int `json:"average_repo_size"  required:"true"`
+
+	// kfk
+	Kafka kfklib.Config `json:"kafka"`
 }
 
 func (cfg *Config) concurrentSize() int {
@@ -40,5 +41,5 @@ func (cfg *Config) Validate() error {
 		return errors.New("the concurrent size <= 0")
 	}
 
-	return nil
+	return cfg.Kafka.Validate()
 }

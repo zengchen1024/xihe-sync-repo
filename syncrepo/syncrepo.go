@@ -1,36 +1,32 @@
 package syncrepo
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
+	"strconv"
 	"sync"
 
-	"github.com/opensourceways/community-robot-lib/utils"
 	kfklib "github.com/opensourceways/kafka-lib/agent"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
-	"github.com/opensourceways/xihe-sync-repo/infrastructure/messages"
 )
 
 const (
-	retryNum           = 3
-	handlerNameGenTask = "create_task"
+	retryNum         = 3
+	headerTag        = "SEND-BACK-NUM"
+	kfkConsumerGroup = "xihe-sync-repo"
 )
 
 type message struct {
-	msg  messages.Message
-	task syncRepoTask
+	task   syncRepoTask
+	body   []byte
+	header map[string]string
 }
 
 type SyncRepo struct {
-	hmac        string
 	topic       string
-	endpoint    string
-	hc          utils.HttpClient
 	generator   syncRepoTaskGenerator
 	syncservice app.SyncService
 
@@ -43,11 +39,8 @@ func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 	size := cfg.concurrentSize()
 
 	return &SyncRepo{
-		hmac:     cfg.AccessHmac,
-		topic:    cfg.Topic,
-		endpoint: cfg.AccessEndpoint,
+		topic: cfg.Topic,
 
-		hc: utils.NewHttpClient(3),
 		generator: syncRepoTaskGenerator{
 			userAgent: cfg.UserAgent,
 		},
@@ -58,10 +51,17 @@ func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 	}
 }
 
-func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
-	if err := kfklib.SubscribeWithStrategyOfRetry(
-		handlerNameGenTask, d.handle, []string{d.topic}, retryNum,
-	); err != nil {
+func (d *SyncRepo) Run(ctx context.Context, cfg *Config, log *logrus.Entry) error {
+	if err := kfklib.Init(&cfg.Kafka, log, nil, "", true); err != nil {
+		return err
+	}
+
+	defer kfklib.Exit()
+
+	err := kfklib.SubscribeWithStrategyOfRetry(
+		kfkConsumerGroup, d.handle, []string{d.topic}, retryNum,
+	)
+	if err != nil {
 		return err
 	}
 
@@ -85,22 +85,23 @@ func (d *SyncRepo) Run(ctx context.Context, log *logrus.Entry) error {
 
 func (d *SyncRepo) handle(body []byte, header map[string]string) error {
 	if err := d.validateMessage(body, header); err != nil {
-		return err
+		// no need retry
+		return nil
 	}
 
-	task, ok, err := d.generator.genTask(body, header)
-	if err != nil || !ok {
-		return err
-	}
+	task, retry, err := d.generator.genTask(body, header)
+	if err != nil {
+		if retry {
+			return err
+		}
 
-	msg := messages.Message{
-		Body:   body,
-		Header: header,
+		return nil
 	}
 
 	d.messageChan <- message{
-		msg:  msg,
-		task: task,
+		task:   task,
+		body:   body,
+		header: header,
 	}
 
 	return nil
@@ -108,21 +109,23 @@ func (d *SyncRepo) handle(body []byte, header map[string]string) error {
 
 func (d *SyncRepo) validateMessage(body []byte, header map[string]string) error {
 	if len(body) == 0 {
-		return errors.New("unexpect message: empty header")
+		return errors.New("unexpect message: empty payload")
 	}
 
 	if len(header) == 0 {
-		return errors.New("unexpect message: empty payload")
+		return errors.New("unexpect message: empty header")
 	}
 
 	return nil
 }
 
 func (d *SyncRepo) doTask(log *logrus.Entry) {
-	f := func(msg message) (err error) {
+	f := func(msg message) {
 		task := &msg.task
-		if err = d.syncservice.SyncRepo(task); err == nil {
-			return nil
+
+		err := d.syncservice.SyncRepo(task)
+		if err == nil {
+			return
 		}
 
 		s := fmt.Sprintf(
@@ -131,14 +134,21 @@ func (d *SyncRepo) doTask(log *logrus.Entry) {
 
 		log.Errorf("sync repo(%s) failed, err:%s", s, err.Error())
 
-		if err = d.sendBack(msg.msg.Body); err != nil {
+		// pubish again
+		h := msg.header
+
+		n := 0
+		if v, ok := h[headerTag]; ok {
+			n, _ = strconv.Atoi(v)
+		}
+		h[headerTag] = strconv.Itoa(n + 1)
+
+		if err = kfklib.Publish(d.topic, h, msg.body); err != nil {
 			log.Errorf(
 				"send back the message for repo(%s) failed, err:%s",
 				s, err.Error(),
 			)
 		}
-
-		return nil
 	}
 
 	for {
@@ -147,28 +157,6 @@ func (d *SyncRepo) doTask(log *logrus.Entry) {
 			return
 		}
 
-		if err := f(msg); err != nil {
-			log.Errorf("do task failed, err:%s", err.Error())
-		}
+		f(msg)
 	}
-}
-
-func (d *SyncRepo) sendBack(body []byte) error {
-	req, err := http.NewRequest(
-		http.MethodPost, d.endpoint, bytes.NewBuffer(body),
-	)
-	if err != nil {
-		return err
-	}
-
-	h := &req.Header
-	h.Add("Content-Type", "application/json")
-	h.Add("User-Agent", "xihe-sync-repo")
-	h.Add("X-Gitlab-Event", "System Hook")
-	h.Add("X-Gitlab-Token", d.hmac)
-	h.Add("X-Gitlab-Event-UUID", "73ed8438-1119-4bb8-ae9d-0180c88ef168")
-
-	_, err = d.hc.ForwardTo(req, nil)
-
-	return err
 }

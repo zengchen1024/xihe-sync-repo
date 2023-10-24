@@ -2,15 +2,9 @@ package utils
 
 import (
 	"bufio"
-	"crypto/md5"
-	"fmt"
 	"os"
 	"time"
 )
-
-func GenMD5(b []byte) string {
-	return fmt.Sprintf("%x", md5.Sum(b))
-}
 
 func ReadFileLineByLine(filename string, handle func(string) error) error {
 	f, err := os.Open(filename)
