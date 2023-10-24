@@ -68,7 +68,7 @@ func (cfg *configuration) setDefault() {
 }
 
 func loadConfig(file string) (cfg configuration, err error) {
-	if err = LoadFromYaml(file, &cfg); err != nil {
+	if err = loadFromYaml(file, &cfg); err != nil {
 		return
 	}
 
@@ -79,7 +79,7 @@ func loadConfig(file string) (cfg configuration, err error) {
 	return
 }
 
-func LoadFromYaml(path string, cfg interface{}) error {
+func loadFromYaml(path string, cfg interface{}) error {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return err

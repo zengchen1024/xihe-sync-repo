@@ -62,9 +62,10 @@ func (rs syncLock) Update(do *synclockimpl.RepoSyncLockDO) error {
 
 	tx := cli.db.Model(cond).Where(cond).Updates(
 		map[string]interface{}{
+			fieldStatus:     do.Status,
+			fieldExpiry:     do.Expiry,
 			fieldVersion:    gorm.Expr(fieldVersion+" + ?", 1),
 			fieldLastCommit: do.LastCommit,
-			fieldStatus:     do.Status,
 		},
 	)
 	if tx.Error != nil {
@@ -85,6 +86,7 @@ func (rs syncLock) toSyncLockTable(do *synclockimpl.RepoSyncLockDO) RepoSyncLock
 		Owner:      do.Owner,
 		RepoId:     do.RepoId,
 		Status:     do.Status,
+		Expiry:     do.Expiry,
 		Version:    do.Version,
 		LastCommit: do.LastCommit,
 	}
@@ -96,6 +98,7 @@ func (rs syncLock) toSyncLockDo(data *RepoSyncLock) synclockimpl.RepoSyncLockDO 
 		Owner:      data.Owner,
 		RepoId:     data.RepoId,
 		Status:     data.Status,
+		Expiry:     data.Expiry,
 		Version:    data.Version,
 		LastCommit: data.LastCommit,
 	}
