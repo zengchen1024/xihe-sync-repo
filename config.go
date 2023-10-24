@@ -5,12 +5,12 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/opensourceways/community-robot-lib/utils"
 	"github.com/opensourceways/xihe-sync-repo/app"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
 	"github.com/opensourceways/xihe-sync-repo/syncrepo"
+	"github.com/opensourceways/xihe-sync-repo/utils"
 )
 
 type configValidate interface {
@@ -40,7 +40,7 @@ func (cfg *configuration) configItems() []interface{} {
 }
 
 func (cfg *configuration) validate() error {
-	if _, err := utils.BuildRequestBody(cfg, ""); err != nil {
+	if err := utils.CheckConfig(cfg, ""); err != nil {
 		return err
 	}
 

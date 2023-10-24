@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.22.11+incompatible
-	github.com/opensourceways/community-robot-lib v0.0.0-20231018034126-a664e14dbb9d
 	github.com/opensourceways/kafka-lib v0.0.0-20231023142428-b41c4ff141c6
+	github.com/opensourceways/server-common-lib v0.0.0-20231016134644-4bd7efe825a9
 	github.com/sirupsen/logrus v1.9.3
 	github.com/xanzy/go-gitlab v0.73.1
 	gorm.io/driver/mysql v1.5.2
@@ -37,7 +37,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.1 // indirect
-	github.com/opensourceways/server-common-lib v0.0.0-20231016134644-4bd7efe825a9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

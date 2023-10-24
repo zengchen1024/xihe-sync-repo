@@ -8,8 +8,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/opensourceways/community-robot-lib/logrusutil"
-	liboptions "github.com/opensourceways/community-robot-lib/options"
+	"github.com/opensourceways/server-common-lib/logrusutil"
+	liboptions "github.com/opensourceways/server-common-lib/options"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
