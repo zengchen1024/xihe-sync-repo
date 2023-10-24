@@ -10,11 +10,9 @@ import (
 
 	"github.com/opensourceways/community-robot-lib/logrusutil"
 	liboptions "github.com/opensourceways/community-robot-lib/options"
-	redislib "github.com/opensourceways/redis-lib"
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/xihe-sync-repo/app"
-	"github.com/opensourceways/xihe-sync-repo/infrastructure/messages"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/mysql"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/obsimpl"
 	"github.com/opensourceways/xihe-sync-repo/infrastructure/platformimpl"
@@ -23,9 +21,8 @@ import (
 )
 
 type options struct {
-	service           liboptions.ServiceOptions
-	enableDebug       bool
-	kafkamqConfigFile string
+	service     liboptions.ServiceOptions
+	enableDebug bool
 }
 
 func (o *options) Validate() error {
@@ -36,11 +33,6 @@ func gatherOptions(fs *flag.FlagSet, args ...string) (options, error) {
 	var o options
 
 	o.service.AddFlags(fs)
-
-	fs.StringVar(
-		&o.kafkamqConfigFile, "kafkamq-config-file", "/etc/kafkamq/config.yaml",
-		"Path to the file containing config of kafkamq.",
-	)
 
 	fs.BoolVar(
 		&o.enableDebug, "enable_debug", false,
@@ -87,36 +79,6 @@ func main() {
 		log.Fatalf("Error remove config file, err:%v", err)
 	}
 
-	// init redis for kafka
-	redisCfg := cfg.getRedisConfig()
-	if err = redislib.Init(&redisCfg, true); err != nil {
-		log.Errorf("Error init redis of kafka error, err:%v", err)
-
-		return
-	}
-
-	defer redislib.Close()
-
-	// init kafka
-	kafkaCfg, err := messages.LoadKafkaConfig(o.kafkamqConfigFile)
-	if err != nil {
-		log.Errorf("Error loading kfk config, err:%v", err)
-
-		return
-	}
-
-	if err := os.Remove(o.kafkamqConfigFile); err != nil {
-		log.Fatalf("Error remove kafka config file, err:%v", err)
-	}
-
-	if err := messages.InitKfkLib(kafkaCfg, log); err != nil {
-		log.Errorf("Error connecting kfk mq, err:%v", err)
-
-		return
-	}
-
-	defer messages.KfkLibExit()
-
 	// gitlab
 	gitlab, err := platformimpl.NewPlatform(&cfg.Gitlab)
 	if err != nil {
@@ -153,10 +115,10 @@ func main() {
 	}
 
 	// run
-	run(d, log)
+	run(d, &cfg.SyncRepo, log)
 }
 
-func run(d *syncrepo.SyncRepo, log *logrus.Entry) {
+func run(d *syncrepo.SyncRepo, cfg *syncrepo.Config, log *logrus.Entry) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
@@ -190,7 +152,7 @@ func run(d *syncrepo.SyncRepo, log *logrus.Entry) {
 		}
 	}(ctx)
 
-	if err := d.Run(ctx, log); err != nil {
+	if err := d.Run(ctx, cfg, log); err != nil {
 		log.Errorf("subscribe failed, err:%v", err)
 	}
 }
