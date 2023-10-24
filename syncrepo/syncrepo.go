@@ -15,7 +15,7 @@ import (
 
 const (
 	retryNum         = 3
-	headerTag        = "SEND-BACK"
+	headerTag        = "SEND-BACK-NUM"
 	kfkConsumerGroup = "xihe-sync-repo"
 )
 
@@ -109,11 +109,11 @@ func (d *SyncRepo) handle(body []byte, header map[string]string) error {
 
 func (d *SyncRepo) validateMessage(body []byte, header map[string]string) error {
 	if len(body) == 0 {
-		return errors.New("unexpect message: empty header")
+		return errors.New("unexpect message: empty payload")
 	}
 
 	if len(header) == 0 {
-		return errors.New("unexpect message: empty payload")
+		return errors.New("unexpect message: empty header")
 	}
 
 	return nil
@@ -136,11 +136,12 @@ func (d *SyncRepo) doTask(log *logrus.Entry) {
 
 		// pubish again
 		h := msg.header
-		if v, ok := h[headerTag]; ok {
-			n, _ := strconv.Atoi(v)
-			h[headerTag] = strconv.Itoa(n + 1)
 
+		n := 0
+		if v, ok := h[headerTag]; ok {
+			n, _ = strconv.Atoi(v)
 		}
+		h[headerTag] = strconv.Itoa(n + 1)
 
 		if err = kfklib.Publish(d.topic, h, msg.body); err != nil {
 			log.Errorf(
