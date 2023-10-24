@@ -52,7 +52,7 @@ func NewSyncRepo(cfg *Config, service app.SyncService) *SyncRepo {
 }
 
 func (d *SyncRepo) Run(ctx context.Context, cfg *Config, log *logrus.Entry) error {
-	if err := kfklib.Init(&cfg.Kafka, log, nil, ""); err != nil {
+	if err := kfklib.Init(&cfg.Kafka, log, nil, "", true); err != nil {
 		return err
 	}
 
