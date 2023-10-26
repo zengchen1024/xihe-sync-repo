@@ -133,10 +133,11 @@ func isZero(v reflect.Value) bool {
 			z = z && isZero(v.Field(i))
 		}
 		return z
+
+	default:
+		// Compare other types directly:
+		z := reflect.Zero(v.Type())
+	
+		return v.Interface() == z.Interface()
 	}
-
-	// Compare other types directly:
-	z := reflect.Zero(v.Type())
-
-	return v.Interface() == z.Interface()
 }
