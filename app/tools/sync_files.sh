@@ -38,7 +38,7 @@ all_files=${file_prefix}_files
 
 if [ -n "$start_commit" ]; then
     set +e
-    git cat-file -t "$start_commit" || start_commit=""
+    git cat-file -t "$start_commit" > /dev/null 2>&1 || start_commit=""
     set -e
 fi
 
