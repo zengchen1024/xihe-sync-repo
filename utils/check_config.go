@@ -123,8 +123,8 @@ func isZero(v reflect.Value) bool {
 		var t time.Time
 
 		if v.Type() == reflect.TypeOf(t) {
-			if v.Interface().(time.Time).IsZero() {
-				return true
+			if value, ok := v.Interface().(time.Time); ok {
+				return value.IsZero()
 			}
 			return false
 		}
@@ -137,7 +137,7 @@ func isZero(v reflect.Value) bool {
 	default:
 		// Compare other types directly:
 		z := reflect.Zero(v.Type())
-	
+
 		return v.Interface() == z.Interface()
 	}
 }

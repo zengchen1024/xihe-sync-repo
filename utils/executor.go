@@ -22,7 +22,7 @@ func RunCmd(args ...string) ([]byte, error, int) {
 		return out, nil, 0
 	}
 
-	if e, ok := err.(*exec.ExitError); ok {
+	if e, ok := err.(*exec.ExitError); ok && e != nil {
 		return out, err, e.ExitCode()
 	}
 
