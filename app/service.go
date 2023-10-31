@@ -197,7 +197,7 @@ func (s *syncService) syncFile(workDir, startCommit string, info *RepoInfo) (
 		startCommit,
 	}
 
-	v, err, _ := utils.RunCmd(params...)
+	v, err, _ := utils.RunCmd(nil, params...)
 	if err != nil {
 		params[2] = "clone_url"
 		err = fmt.Errorf(

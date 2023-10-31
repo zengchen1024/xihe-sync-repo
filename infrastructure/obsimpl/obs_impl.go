@@ -19,7 +19,7 @@ func NewOBS(cfg *Config) (dobs.OBS, error) {
 	}
 
 	_, err, _ = utils.RunCmd(
-		cfg.OBSUtilPath, "config",
+		nil, cfg.OBSUtilPath, "config",
 		"-i="+cfg.AccessKey, "-k="+cfg.SecretKey, "-e="+cfg.Endpoint,
 	)
 	if err != nil {

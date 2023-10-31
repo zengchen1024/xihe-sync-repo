@@ -1,8 +1,11 @@
 package utils
 
-import "os/exec"
+import (
+	"bytes"
+	"os/exec"
+)
 
-func RunCmd(args ...string) ([]byte, error, int) {
+func RunCmd(stdin *bytes.Buffer, args ...string) ([]byte, error, int) {
 	n := len(args)
 	if n == 0 {
 		return nil, nil, 0
@@ -17,6 +20,10 @@ func RunCmd(args ...string) ([]byte, error, int) {
 	}
 
 	c := exec.Command(cmd, args...)
+	if stdin != nil {
+		c.Stdin = stdin
+	}
+
 	out, err := c.CombinedOutput()
 	if err == nil {
 		return out, nil, 0
